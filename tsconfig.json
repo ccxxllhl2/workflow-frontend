@@ -18,7 +18,11 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "@mui/material/utils": ["./node_modules/@mui/material/utils/index.js"]
+    }
   },
   "include": [
     "src"

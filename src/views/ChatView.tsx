@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Input, Button, Typography, Avatar, Spin, message } from 'antd';
 import { SendOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { sendChatMessage } from '../api/chat';
+import WorkflowSidebar from '../components/workflow/WorkflowSidebar';
 import './ChatView.css';
 
 const { TextArea } = Input;
@@ -18,6 +19,7 @@ const ChatView: React.FC = () => {
   const [userInput, setUserInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isWorkflowVisible, setIsWorkflowVisible] = useState(false);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   // Get agent response from the API
@@ -56,6 +58,9 @@ const ChatView: React.FC = () => {
     setMessages(prevMessages => [...prevMessages, userMessage]);
     setUserInput('');
     
+    // Show workflow sidebar when user sends a message
+    setIsWorkflowVisible(true);
+    
     // Get agent response
     try {
       setIsLoading(true);
@@ -67,6 +72,11 @@ const ChatView: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+  
+  // Close workflow sidebar
+  const handleCloseWorkflow = () => {
+    setIsWorkflowVisible(false);
   };
 
   // Format message with line breaks and links
@@ -123,6 +133,12 @@ const ChatView: React.FC = () => {
 
   return (
     <div className="chat-container">
+      {/* Workflow Sidebar */}
+      <WorkflowSidebar 
+        isOpen={isWorkflowVisible} 
+        onClose={handleCloseWorkflow} 
+      />
+      
       {/* Chat Messages */}
       <div className="chat-messages" ref={messagesContainerRef}>
         {messages.length === 0 ? (

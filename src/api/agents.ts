@@ -1,4 +1,4 @@
-import api from './index';
+import api from './index.js';
 
 // Define the Agent interface based on expected API response
 export interface Agent {

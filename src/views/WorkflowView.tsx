@@ -283,17 +283,22 @@ const WorkflowView: React.FC = () => {
     // Use the API polling function
     refreshTimerRef.current = pollWorkflowState((data: WorkflowState) => {
       // Process the data
+      if (!data || !data.nodes) {
+        console.warn('Received invalid workflow state data:', data);
+        return;
+      }
+      
       const processedNodes = data.nodes.map((node, index) => ({
         ...node,
         position: node.position || { x: 100 + (index * 200), y: 100 }
       }));
       
       setNodes(processedNodes);
-      setEdges(data.edges);
-      setLastUpdated(new Date(data.lastUpdated));
+      setEdges(data.edges || []);
+      setLastUpdated(new Date(data.lastUpdated || Date.now()));
       
       // Update graph
-      updateGraph(processedNodes, data.edges);
+      updateGraph(processedNodes, data.edges || []);
     }, refreshInterval * 1000);
   };
 
