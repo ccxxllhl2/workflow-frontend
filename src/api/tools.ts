@@ -1,4 +1,4 @@
-import api from './index.js';
+import api from './index';
 
 // Define the Tool interface based on expected API response
 export interface Tool {

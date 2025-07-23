@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Box, Typography, IconButton, Paper, CircularProgress } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getWorkflowState, pollWorkflowState, WorkflowApiResponse } from '../../api/state.js';
+import { pollWorkflowState, WorkflowApiResponse } from '../../api/state';
 
 interface WorkflowSidebarProps {
   isOpen: boolean;
@@ -22,7 +22,7 @@ const WorkflowSidebar: React.FC<WorkflowSidebarProps> = ({ isOpen, onClose }) =>
       // Start polling the workflow state
       const stop = pollWorkflowState((state) => {
         console.log('State received in WorkflowSidebar:', state);
-        // Check if state has originalData (from state.ts) or use state directly (from state.js)
+        // Check if state has originalData (from state.ts) or use state directly (from state.ts)
         if (state) {
           if (state.originalData) {
             console.log('Setting workflowData with originalData:', state.originalData);

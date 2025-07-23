@@ -1,4 +1,4 @@
-import api from './index.js';
+import api from './index';
 
 // Define the response interface for chat messages
 export interface ChatResponse {
