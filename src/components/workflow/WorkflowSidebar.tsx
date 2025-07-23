@@ -134,6 +134,8 @@ const WorkflowSidebar: React.FC<WorkflowSidebarProps> = ({ isOpen, onClose }) =>
 
   const sortedNodes = getSortedNodes();
 
+  console.log('Sorted nodes:', sortedNodes);
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -218,7 +220,7 @@ const WorkflowSidebar: React.FC<WorkflowSidebarProps> = ({ isOpen, onClose }) =>
                 
                 {/* Nodes */}
                 <AnimatePresence>
-                  {sortedNodes.map((node, index) => (
+                  {sortedNodes.filter(node=>node?.timestamp).map((node, index) => (
                     <motion.div
                       key={node.name}
                       initial={{ opacity: 0, y: 20 }}

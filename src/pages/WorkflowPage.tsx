@@ -174,7 +174,7 @@ const WorkflowPage: React.FC = () => {
       <Card sx={{ mb: 3 }}>
         <CardContent>
           <Grid container spacing={2} alignItems="center">
-            <Grid item>
+            <Grid>
               <FormControlLabel
                 control={
                   <Switch
@@ -187,7 +187,7 @@ const WorkflowPage: React.FC = () => {
               />
             </Grid>
             
-            <Grid item>
+            <Grid>
               <FormControl variant="outlined" size="small" sx={{ minWidth: 120 }}>
                 <InputLabel id="refresh-interval-label">Interval</InputLabel>
                 <Select
@@ -205,7 +205,7 @@ const WorkflowPage: React.FC = () => {
               </FormControl>
             </Grid>
             
-            <Grid item>
+            <Grid>
               <Button 
                 variant="outlined" 
                 onClick={fetchWorkflowState}
@@ -215,9 +215,9 @@ const WorkflowPage: React.FC = () => {
               </Button>
             </Grid>
             
-            <Grid item xs />
+            <Grid />
             
-            <Grid item>
+            <Grid>
               <Typography variant="body2" color="text.secondary">
                 Last updated: {formatLastUpdated(lastUpdated)}
               </Typography>

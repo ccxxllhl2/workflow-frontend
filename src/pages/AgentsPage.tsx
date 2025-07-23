@@ -98,7 +98,7 @@ const AgentsPage: React.FC = () => {
       <Grid container spacing={3}>
         {!isLoading && filteredAgents.length > 0 ? (
           filteredAgents.map((agent, index) => (
-            <Grid item xs={12} key={agent.id}>
+            <Grid key={agent.id}>
               <motion.div
                 variants={cardVariants}
                 initial="hidden"
@@ -140,7 +140,7 @@ const AgentsPage: React.FC = () => {
           ))
         ) : (
           !isLoading && searchTerm && (
-            <Grid item xs={12}>
+            <Grid>
               <Typography align="center">No agents found matching your search criteria.</Typography>
             </Grid>
           )

@@ -114,7 +114,7 @@ const ToolsPage: React.FC = () => {
       <Grid container spacing={3}>
         {!isLoading && filteredTools.length > 0 ? (
           filteredTools.map((tool, index) => (
-            <Grid item xs={12} key={tool.id}>
+            <Grid key={tool.id}>
               <motion.div
                 variants={cardVariants}
                 initial="hidden"
@@ -162,7 +162,7 @@ const ToolsPage: React.FC = () => {
           ))
         ) : (
           !isLoading && searchTerm && (
-            <Grid item xs={12}>
+            <Grid>
               <Typography align="center">No tools found matching your search criteria.</Typography>
             </Grid>
           )
