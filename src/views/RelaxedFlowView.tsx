@@ -3,7 +3,7 @@ import { Input, Button, Typography, Avatar, Spin, message } from 'antd';
 import { SendOutlined, InfoCircleOutlined, MenuOutlined } from '@ant-design/icons';
 import { sendChatMessage } from '../api/chat';
 import WorkflowSidebar from '../components/workflow/WorkflowSidebar';
-import './ChatView.css';
+import './ChatView.css'; // Reuse ChatView styles
 
 const { TextArea } = Input;
 const { Title, Paragraph } = Typography;
@@ -14,12 +14,12 @@ interface Message {
   timestamp: Date;
 }
 
-const ChatView: React.FC = () => {
+const RelaxedFlowView: React.FC = () => {
   // State
   const [userInput, setUserInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isWorkflowVisible, setIsWorkflowVisible] = useState(false);
+  const [isWorkflowVisible, setIsWorkflowVisible] = useState(true); // Default to true for RelaxedFlow
   const [sidebarWidth, setSidebarWidth] = useState(0);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
@@ -58,9 +58,6 @@ const ChatView: React.FC = () => {
     };
     setMessages(prevMessages => [...prevMessages, userMessage]);
     setUserInput('');
-    
-    // Show workflow sidebar when user sends a message
-    setIsWorkflowVisible(true);
     
     // Get agent response
     try {
@@ -161,9 +158,9 @@ const ChatView: React.FC = () => {
       <div className="chat-messages" ref={messagesContainerRef}>
         {messages.length === 0 ? (
           <div className="welcome-message">
-            <Title level={3}>Welcome to AI Workflow</Title>
+            <Title level={3}>Welcome to RelaxedFlow</Title>
             <Paragraph>
-              Start a conversation with the AI agent to describe your task.
+              Start a conversation with the AI agent while monitoring the workflow progress.
             </Paragraph>
           </div>
         ) : (
@@ -220,8 +217,8 @@ const ChatView: React.FC = () => {
             onKeyDown={handleKeyDown}
             className="message-input"
           />
-          {/* Workflow Toggle Button - only show when sidebar is closed and there are messages */}
-          {!isWorkflowVisible && messages.length > 0 && (
+          {/* Workflow Toggle Button - only show when sidebar is closed */}
+          {!isWorkflowVisible && (
             <Button 
               type="default" 
               onClick={handleOpenWorkflow}
@@ -250,4 +247,4 @@ const ChatView: React.FC = () => {
   );
 };
 
-export default ChatView;
+export default RelaxedFlowView;

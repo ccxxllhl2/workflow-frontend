@@ -4,11 +4,13 @@ import {
   MenuUnfoldOutlined,
   MenuFoldOutlined,
   MessageOutlined,
-  ApartmentOutlined
+  ApartmentOutlined,
+  ThunderboltOutlined
 } from '@ant-design/icons';
 import { useNavigate, useLocation, Routes, Route } from 'react-router-dom';
 import ChatView from './views/ChatView';
 import WorkflowView from './views/WorkflowView';
+import RelaxedFlowView from './views/RelaxedFlowView';
 import './App.css';
 
 const { Header, Sider, Content, Footer } = Layout;
@@ -26,6 +28,8 @@ const App: React.FC = () => {
       setSelectedKeys(['chat']);
     } else if (path === '/workflow') {
       setSelectedKeys(['workflow']);
+    } else if (path === '/relaxedflow') {
+      setSelectedKeys(['relaxedflow']);
     }
   }, [location.pathname]);
 
@@ -41,6 +45,8 @@ const App: React.FC = () => {
       return 'Chat';
     } else if (path === '/workflow') {
       return 'Workflow';
+    } else if (path === '/relaxedflow') {
+      return 'RelaxedFlow';
     }
     return 'AI Workflow';
   };
@@ -77,6 +83,12 @@ const App: React.FC = () => {
                   icon: <ApartmentOutlined />,
                   label: 'Workflow',
                   onClick: () => navigateTo('/workflow')
+                },
+                {
+                  key: 'relaxedflow',
+                  icon: <ThunderboltOutlined />,
+                  label: 'RelaxedFlow',
+                  onClick: () => navigateTo('/relaxedflow')
                 }
               ]}
             />
@@ -105,6 +117,7 @@ const App: React.FC = () => {
               <Routes>
                 <Route path="/" element={<ChatView />} />
                 <Route path="/workflow" element={<WorkflowView />} />
+                <Route path="/relaxedflow" element={<RelaxedFlowView />} />
               </Routes>
             </Content>
 

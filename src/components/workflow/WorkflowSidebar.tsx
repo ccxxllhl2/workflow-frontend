@@ -7,12 +7,18 @@ import { pollWorkflowState, WorkflowApiResponse } from '../../api/state';
 interface WorkflowSidebarProps {
   isOpen: boolean;
   onClose: () => void;
+  onWidthChange?: (width: number) => void;
 }
 
-const WorkflowSidebar: React.FC<WorkflowSidebarProps> = ({ isOpen, onClose }) => {
+const WorkflowSidebar: React.FC<WorkflowSidebarProps> = ({ isOpen, onClose, onWidthChange }) => {
   const [workflowData, setWorkflowData] = useState<WorkflowApiResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [stopPolling, setStopPolling] = useState<(() => void) | null>(null);
+  const [sidebarWidth, setSidebarWidth] = useState(() => {
+    const savedWidth = localStorage.getItem('workflowSidebarWidth');
+    return savedWidth ? parseInt(savedWidth, 10) : 300;
+  });
+  const [isResizing, setIsResizing] = useState(false);
 
   // Start polling when the sidebar is opened
   useEffect(() => {
@@ -53,6 +59,51 @@ const WorkflowSidebar: React.FC<WorkflowSidebarProps> = ({ isOpen, onClose }) =>
       }
     };
   }, [isOpen]);
+
+  // Notify parent component of width changes
+  useEffect(() => {
+    if (onWidthChange) {
+      onWidthChange(isOpen ? sidebarWidth : 0);
+    }
+  }, [isOpen, sidebarWidth, onWidthChange]);
+
+  // Handle resize functionality
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing) return;
+      
+      const newWidth = e.clientX;
+      if (newWidth >= 250 && newWidth <= 600) { // Min 250px, Max 600px
+        setSidebarWidth(newWidth);
+      }
+    };
+
+    const handleMouseUp = () => {
+      if (isResizing) {
+        setIsResizing(false);
+        localStorage.setItem('workflowSidebarWidth', sidebarWidth.toString());
+      }
+    };
+
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = 'ew-resize';
+      document.body.style.userSelect = 'none';
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [isResizing, sidebarWidth]);
 
   // Sort nodes by timestamp
   const getSortedNodes = () => {
@@ -148,7 +199,7 @@ const WorkflowSidebar: React.FC<WorkflowSidebarProps> = ({ isOpen, onClose }) =>
             position: 'fixed',
             top: 0,
             left: 0,
-            width: '300px',
+            width: `${sidebarWidth}px`,
             height: '100vh',
             zIndex: 1000,
             backgroundColor: '#fff',
@@ -276,7 +327,7 @@ const WorkflowSidebar: React.FC<WorkflowSidebarProps> = ({ isOpen, onClose }) =>
                           marginTop: '-40px',
                           borderRadius: '8px',
                           backgroundColor: '#f9f9f9',
-                          maxWidth: '220px'
+                          maxWidth: `${sidebarWidth - 80}px` // Adapt to sidebar width with 80px margin for spacing
                         }}
                       >
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
@@ -339,6 +390,32 @@ const WorkflowSidebar: React.FC<WorkflowSidebarProps> = ({ isOpen, onClose }) =>
             </Typography>
             {isLoading && <CircularProgress size={16} sx={{ ml: 1 }} />}
           </Box>
+          
+          {/* Resize Handle */}
+          <div
+            onMouseDown={handleMouseDown}
+            style={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              width: '4px',
+              height: '100%',
+              backgroundColor: isResizing ? '#1976d2' : 'transparent',
+              cursor: 'ew-resize',
+              zIndex: 1001,
+              transition: 'background-color 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              if (!isResizing) {
+                e.currentTarget.style.backgroundColor = '#e3f2fd';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!isResizing) {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }
+            }}
+          />
         </motion.div>
       )}
     </AnimatePresence>
