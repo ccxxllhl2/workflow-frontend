@@ -35,7 +35,7 @@ const RelaxedFlowView: React.FC = () => {
         timestamp: new Date()
       };
     } catch (error) {
-      console.error('Error getting agent response:', error);
+      console.error('Error getting agent relax response:', error);
       
       // Return a fallback response in case of error
       return {

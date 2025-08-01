@@ -27,18 +27,16 @@ const WorkflowSidebar: React.FC<WorkflowSidebarProps> = ({ isOpen, onClose, onWi
       
       // Start polling the workflow state
       const stop = pollWorkflowState((state) => {
-        console.log('State received in WorkflowSidebar:', state);
+        //console.log('State received in WorkflowSidebar:', state);
         // Check if state has originalData (from state.ts) or use state directly (from state.ts)
         if (state) {
           if (state.originalData) {
-            console.log('Setting workflowData with originalData:', state.originalData);
+            //console.log('Setting workflowData with originalData:', state.originalData);
             setWorkflowData(state.originalData);
           } else {
-            console.log('Setting workflowData with state directly:', state);
+            //console.log('Setting workflowData with state directly:', state);
             setWorkflowData(state as unknown as WorkflowApiResponse);
           }
-        } else {
-          console.log('No state received:', state);
         }
         setIsLoading(false);
       }); // Using default 1 second interval
@@ -108,11 +106,11 @@ const WorkflowSidebar: React.FC<WorkflowSidebarProps> = ({ isOpen, onClose, onWi
   // Sort nodes by timestamp
   const getSortedNodes = () => {
     if (!workflowData || !workflowData.Nodes) {
-      console.log('No workflowData or Nodes:', workflowData);
+      //console.log('No workflowData or Nodes:', workflowData);
       return [];
     }
     
-    console.log('Nodes before processing:', Object.entries(workflowData.Nodes));
+    //console.log('Nodes before processing:', Object.entries(workflowData.Nodes));
     
     // Define a type guard function to check if nodeData is a valid object with required properties
     const isValidNodeData = (data: any): data is { status: string; timestamp: number; message: string } => {
@@ -124,7 +122,7 @@ const WorkflowSidebar: React.FC<WorkflowSidebarProps> = ({ isOpen, onClose, onWi
       .map(([nodeName, nodeData]) => {
         // If nodeData is empty or missing properties, provide defaults
         if (!nodeData || typeof nodeData !== 'object') {
-          console.log('Empty node data for:', nodeName);
+          //console.log('Empty node data for:', nodeName);
           return [nodeName, { 
             status: 'waiting', 
             timestamp: 0, 
@@ -134,7 +132,7 @@ const WorkflowSidebar: React.FC<WorkflowSidebarProps> = ({ isOpen, onClose, onWi
         
         // Check if the node object is empty (no properties)
         if (Object.keys(nodeData).length === 0) {
-          console.log('Empty object for node:', nodeName);
+          //console.log('Empty object for node:', nodeName);
           return [nodeName, { 
             status: 'waiting', 
             timestamp: 0, 
@@ -153,7 +151,7 @@ const WorkflowSidebar: React.FC<WorkflowSidebarProps> = ({ isOpen, onClose, onWi
         return [nodeName, processedData];
       });
     
-    console.log('Nodes after processing:', processedNodes);
+    //console.log('Nodes after processing:', processedNodes);
     
     // Filter out nodes that we don't want to display (optional)
     const filteredNodes = processedNodes.filter(([_, nodeData]) => {
@@ -185,7 +183,7 @@ const WorkflowSidebar: React.FC<WorkflowSidebarProps> = ({ isOpen, onClose, onWi
 
   const sortedNodes = getSortedNodes();
 
-  console.log('Sorted nodes:', sortedNodes);
+  //console.log('Sorted nodes:', sortedNodes);
 
   return (
     <AnimatePresence>

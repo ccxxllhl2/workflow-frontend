@@ -16,7 +16,8 @@ export const sendChatMessage = async (message: string): Promise<ChatResponse> =>
   try {
     // Send message in the request body instead of URL parameters to avoid OPTIONS preflight
     // Use a longer timeout (60 seconds) for chat API to accommodate AI processing time
-    const response = await api.post('/chat', { message }, { timeout: 60000 });
+    const response = await api.post('/chat', { message }, { timeout: 120000 });
+    console.log(response.data)
     return response.data;
   } catch (error) {
     console.error('Error sending message to chat:', error);

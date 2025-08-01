@@ -54,7 +54,7 @@ export const getWorkflowState = async (): Promise<WorkflowState> => {
     const response = await api.get('/state');
     const data = response.data as WorkflowApiResponse;
     
-    console.log('API Response Data:', data);
+    //console.log('API Response Data:', data);
     
     // Transform the API response to match the expected format
     // Convert Nodes object to an array of WorkflowNode objects
@@ -123,7 +123,7 @@ export const pollWorkflowState = (
     
     try {
       const state = await getWorkflowState();
-      console.log('State before callback:', state);
+      //console.log('State before callback:', state);
       if (isPolling) {
         callback(state);
       }
