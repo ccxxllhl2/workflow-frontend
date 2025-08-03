@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Input, Button, Typography, Avatar, Spin, message } from 'antd';
 import { SendOutlined, InfoCircleOutlined, MenuOutlined } from '@ant-design/icons';
-import { sendChatMessage } from '../api/chat';
+import { sendChatMessageAsync, getWorkflowState, WorkflowState } from '../api/chat';
 import WorkflowSidebar from '../components/workflow/WorkflowSidebar';
 import './ChatView.css';
 
@@ -21,29 +21,65 @@ const ChatView: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isWorkflowVisible, setIsWorkflowVisible] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(0);
+  const [workflowState, setWorkflowState] = useState<WorkflowState | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const responseGeneratorRef = useRef<AsyncGenerator<string, void, unknown> | null>(null);
 
-  // Get agent response from the API
-  const getAgentResponse = async (userMessage: string): Promise<Message> => {
+  // 使用 AsyncGenerator 监听工作流状态变化
+  const startStatePolling = async () => {
+    // 确保之前的轮询已停止
+    stopStatePolling();
+
     try {
-      const response = await sendChatMessage(userMessage);
-      
-      // Format the response from the API
-      return {
-        role: 'agent',
-        content: response.message || response.content || 'I received your message.',
-        timestamp: new Date()
+      // 使用 AsyncGenerator 监听响应
+      const responseGenerator = getWorkflowState();
+
+      // 启动一个独立进程来处理生成器
+      const processResponses = async () => {
+        try {
+          // 遍历生成器获取新响应
+          for await (const responseContent of responseGenerator) {
+            // 创建一个新的 agent 消息
+            const agentMessage: Message = {
+              role: 'agent',
+              content: responseContent,
+              timestamp: new Date()
+            };
+
+            // 添加消息到列表
+            setMessages(prevMessages => [...prevMessages, agentMessage]);
+
+            // 如果工作流完成，可以在这里检测并停止
+            // 注意：这可能需要另外的状态检查逻辑
+          }
+        } catch (error) {
+          console.error('处理响应时出错:', error);
+        } finally {
+          setIsLoading(false);
+        }
       };
+
+      // 启动处理响应的进程
+      processResponses();
+
     } catch (error) {
-      console.error('Error getting agent response:', error);
-      
-      // Return a fallback response in case of error
-      return {
-        role: 'agent',
-        content: 'Sorry, I encountered an error processing your request. Please try again later.',
-        timestamp: new Date()
-      };
+      console.error('启动响应监听时出错:', error);
+      setIsLoading(false);
     }
+  };
+
+  // Stop polling
+  const stopStatePolling = () => {
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
+
+    // 标记生成器引用为 null，下次创建新的生成器
+    // 注意：AsyncGenerator 没有直接的取消方法，
+    // 我们依赖于 getWorkflowState 中的循环检查和超时
+    responseGeneratorRef.current = null;
   };
 
   // Send message
@@ -62,15 +98,19 @@ const ChatView: React.FC = () => {
     // Show workflow sidebar when user sends a message
     setIsWorkflowVisible(true);
     
-    // Get agent response
+    // Send message to backend without waiting for response
     try {
       setIsLoading(true);
-      const agentResponse = await getAgentResponse(userMessage.content);
-      setMessages(prevMessages => [...prevMessages, agentResponse]);
+
+      // Send message asynchronously
+      await sendChatMessageAsync(userMessage.content);
+
+      // 开始监听响应
+      startStatePolling();
+      
     } catch (error) {
-      message.error('Failed to get response from agent');
-      console.error('Error getting agent response:', error);
-    } finally {
+      message.error('Failed to send message to agent');
+      console.error('Error sending message:', error);
       setIsLoading(false);
     }
   };
@@ -132,6 +172,13 @@ const ChatView: React.FC = () => {
     if (inputElement) {
       inputElement.focus();
     }
+  }, []);
+
+  // Cleanup polling interval on component unmount
+  useEffect(() => {
+    return () => {
+      stopStatePolling();
+    };
   }, []);
 
   // Handle Enter key press

@@ -1,13 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, IconButton, Paper, CircularProgress } from '@mui/material';
-import { Close as CloseIcon } from '@mui/icons-material';
+import { Box, Typography, IconButton, Paper, CircularProgress, Button, Menu, MenuItem } from '@mui/material';
+import { Close as CloseIcon, History as HistoryIcon } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { pollWorkflowState, WorkflowApiResponse } from '../../api/state';
+import { updateWorkflowData } from '../../api/chat';
 
 interface WorkflowSidebarProps {
   isOpen: boolean;
   onClose: () => void;
   onWidthChange?: (width: number) => void;
+}
+
+interface WorkflowHistoryRecord {
+  timestamp: string;
+  workflowData: WorkflowApiResponse;
 }
 
 const WorkflowSidebar: React.FC<WorkflowSidebarProps> = ({ isOpen, onClose, onWidthChange }) => {
@@ -19,6 +25,11 @@ const WorkflowSidebar: React.FC<WorkflowSidebarProps> = ({ isOpen, onClose, onWi
     return savedWidth ? parseInt(savedWidth, 10) : 300;
   });
   const [isResizing, setIsResizing] = useState(false);
+  const [historyMenuAnchor, setHistoryMenuAnchor] = useState<null | HTMLElement>(null);
+  const [workflowHistory, setWorkflowHistory] = useState<WorkflowHistoryRecord[]>(() => {
+    const savedHistory = localStorage.getItem('workflowHistory');
+    return savedHistory ? JSON.parse(savedHistory) : [];
+  });
 
   // Start polling when the sidebar is opened
   useEffect(() => {
@@ -30,12 +41,58 @@ const WorkflowSidebar: React.FC<WorkflowSidebarProps> = ({ isOpen, onClose, onWi
         //console.log('State received in WorkflowSidebar:', state);
         // Check if state has originalData (from state.ts) or use state directly (from state.ts)
         if (state) {
+          let currentWorkflowData: WorkflowApiResponse;
+          
           if (state.originalData) {
             //console.log('Setting workflowData with originalData:', state.originalData);
-            setWorkflowData(state.originalData);
+            currentWorkflowData = state.originalData;
+            // 更新共享的工作流数据
+            updateWorkflowData(state.originalData);
           } else {
             //console.log('Setting workflowData with state directly:', state);
-            setWorkflowData(state as unknown as WorkflowApiResponse);
+            currentWorkflowData = state as unknown as WorkflowApiResponse;
+            // 更新共享的工作流数据
+            updateWorkflowData(currentWorkflowData);
+          }
+          
+          // Handle different WorkflowState conditions
+          if (currentWorkflowData.WorkflowState === 'Init') {
+            // Clear workflow display for Init state
+            setWorkflowData({
+              WorkflowState: 'Init',
+              Nodes: {},
+              Response: []
+            });
+          } else if (currentWorkflowData.WorkflowState === 'Running') {
+            // Continue current behavior for Running state
+            setWorkflowData(currentWorkflowData);
+          } else if (currentWorkflowData.WorkflowState === 'Finished') {
+            // Store workflow record with timestamp for Finished state
+            setWorkflowData(currentWorkflowData);
+            
+            // Save to history if not already saved
+            const timestamp = new Date().toISOString();
+            const newRecord: WorkflowHistoryRecord = {
+              timestamp,
+              workflowData: currentWorkflowData
+            };
+            
+            setWorkflowHistory(prevHistory => {
+              // Check if this record already exists (avoid duplicates)
+              const exists = prevHistory.some(record => 
+                JSON.stringify(record.workflowData) === JSON.stringify(currentWorkflowData)
+              );
+              
+              if (!exists) {
+                const updatedHistory = [...prevHistory, newRecord];
+                localStorage.setItem('workflowHistory', JSON.stringify(updatedHistory));
+                return updatedHistory;
+              }
+              return prevHistory;
+            });
+          } else {
+            // Default behavior for other states
+            setWorkflowData(currentWorkflowData);
           }
         }
         setIsLoading(false);
@@ -102,6 +159,30 @@ const WorkflowSidebar: React.FC<WorkflowSidebarProps> = ({ isOpen, onClose, onWi
       document.body.style.userSelect = '';
     };
   }, [isResizing, sidebarWidth]);
+
+  // Handle history menu
+  const handleHistoryMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setHistoryMenuAnchor(event.currentTarget);
+  };
+
+  const handleHistoryMenuClose = () => {
+    setHistoryMenuAnchor(null);
+  };
+
+  // Download workflow history record
+  const downloadHistoryRecord = (record: WorkflowHistoryRecord) => {
+    const dataStr = JSON.stringify(record.workflowData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `workflow-${new Date(record.timestamp).toISOString().slice(0, 19).replace(/:/g, '-')}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    handleHistoryMenuClose();
+  };
 
   // Sort nodes by timestamp
   const getSortedNodes = () => {
@@ -383,11 +464,65 @@ const WorkflowSidebar: React.FC<WorkflowSidebarProps> = ({ isOpen, onClose, onWi
               alignItems: 'center'
             }}
           >
-            <Typography variant="caption" color="text.secondary">
-              Status: {workflowData?.WorkflowState || (isLoading ? 'Loading...' : 'Waiting for data...')}
-            </Typography>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<HistoryIcon />}
+              onClick={handleHistoryMenuOpen}
+              disabled={workflowHistory.length === 0}
+              sx={{ textTransform: 'none' }}
+            >
+              Workflow History ({workflowHistory.length})
+            </Button>
             {isLoading && <CircularProgress size={16} sx={{ ml: 1 }} />}
           </Box>
+          
+          {/* History Menu */}
+          <Menu
+            anchorEl={historyMenuAnchor}
+            open={Boolean(historyMenuAnchor)}
+            onClose={handleHistoryMenuClose}
+            PaperProps={{
+              style: {
+                maxHeight: 300,
+                width: '300px',
+              },
+            }}
+          >
+            {workflowHistory.length === 0 ? (
+              <MenuItem disabled>
+                <Typography variant="body2" color="text.secondary">
+                  No workflow history available
+                </Typography>
+              </MenuItem>
+            ) : (
+              workflowHistory.map((record, index) => (
+                <MenuItem
+                  key={index}
+                  onClick={() => downloadHistoryRecord(record)}
+                  sx={{
+                    flexDirection: 'column',
+                    alignItems: 'flex-start',
+                    py: 1.5,
+                    '&:hover': {
+                      backgroundColor: '#f5f5f5'
+                    }
+                  }}
+                >
+                  <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                    {new Date(record.timestamp).toLocaleDateString()} {new Date(record.timestamp).toLocaleTimeString()}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Nodes: {Object.keys(record.workflowData.Nodes || {}).length} | 
+                    State: {record.workflowData.WorkflowState}
+                  </Typography>
+                  <Typography variant="caption" color="primary">
+                    Click to download
+                  </Typography>
+                </MenuItem>
+              ))
+            )}
+          </Menu>
           
           {/* Resize Handle */}
           <div

@@ -12,6 +12,7 @@ export interface WorkflowApiResponse {
   Nodes: {
     [key: string]: WorkflowNodeData;
   };
+  Response: string[];
 }
 
 // Define the WorkflowNode interface based on expected API response
@@ -55,9 +56,7 @@ export const getWorkflowState = async (): Promise<WorkflowState> => {
     const data = response.data as WorkflowApiResponse;
     
     //console.log('API Response Data:', data);
-    
-    // Transform the API response to match the expected format
-    // Convert Nodes object to an array of WorkflowNode objects
+
     let nodesArray: WorkflowNode[] = [];
     
     if (data && data.Nodes) {
@@ -100,7 +99,8 @@ export const getWorkflowState = async (): Promise<WorkflowState> => {
       lastUpdated: new Date().toISOString(),
       originalData: {
         WorkflowState: 'Error',
-        Nodes: {}
+        Nodes: {},
+        Response: []
       }
     };
   }
