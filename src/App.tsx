@@ -11,6 +11,7 @@ import { useNavigate, useLocation, Routes, Route } from 'react-router-dom';
 import ChatView from './views/ChatView';
 import WorkflowView from './views/WorkflowView';
 import RelaxedFlowView from './views/RelaxedFlowView';
+import { initializeConfig } from './utils/config';
 import './App.css';
 
 const { Header, Sider, Content, Footer } = Layout;
@@ -18,8 +19,26 @@ const { Header, Sider, Content, Footer } = Layout;
 const App: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [selectedKeys, setSelectedKeys] = useState<string[]>(['chat']);
+  const [configInitialized, setConfigInitialized] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Initialize configuration on app startup
+  useEffect(() => {
+    const initConfig = async () => {
+      try {
+        await initializeConfig();
+        setConfigInitialized(true);
+        console.log('Configuration initialized successfully');
+      } catch (error) {
+        console.error('Failed to initialize configuration:', error);
+        // Still set as initialized to allow app to function
+        setConfigInitialized(true);
+      }
+    };
+    
+    initConfig();
+  }, []);
 
   // Update selected keys based on current route
   useEffect(() => {

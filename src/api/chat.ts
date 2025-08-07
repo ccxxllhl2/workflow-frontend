@@ -1,5 +1,6 @@
 import api from './index';
 import { WorkflowApiResponse } from './state';
+import { getConfig, initializeConfig, createNewSession } from '../utils/config';
 
 // 创建一个全局的工作流数据存储
 let workflowData: WorkflowApiResponse | null = null;
@@ -37,10 +38,21 @@ export interface WorkflowState {
  */
 export const sendChatMessage = async (message: string): Promise<ChatResponse> => {
   try {
-    // Send message in the request body instead of URL parameters to avoid OPTIONS preflight
-    // Use a longer timeout (60 seconds) for chat API to accommodate AI processing time
-    const response = await api.post('/chat', { message }, { timeout: 120000 });
-    console.log(response.data)
+    // Get or initialize configuration
+    const config = await initializeConfig();
+    
+    if (!config.session_id) {
+      throw new Error('Session not initialized');
+    }
+    
+    // Send message with user_id and session_id
+    const response = await api.post('/chat', { 
+      message, 
+      user_id: config.user_id, 
+      session_id: config.session_id 
+    }, { timeout: 120000 });
+    
+    console.log(response.data);
     return response.data;
   } catch (error) {
     console.error('Error sending message to chat:', error);
@@ -58,8 +70,19 @@ export const sendChatMessageAsync = async (message: string): Promise<void> => {
     // Reset workflow data for new chat session
     resetWorkflowData();
     
+    // Get or initialize configuration
+    const config = await initializeConfig();
+    
+    if (!config.session_id) {
+      throw new Error('Session not initialized');
+    }
+    
     // Send message without waiting for response
-    api.post('/chat', { message }, { timeout: 120000 }).catch(error => {
+    api.post('/chat', { 
+      message, 
+      user_id: config.user_id, 
+      session_id: config.session_id 
+    }, { timeout: 120000 }).catch(error => {
       console.error('Error in background chat request:', error);
     });
   } catch (error) {

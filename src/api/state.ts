@@ -1,4 +1,5 @@
 import api from './index';
+import { getConfig } from '../utils/config';
 
 // Define the original API response structure
 export interface WorkflowNodeData {
@@ -52,7 +53,18 @@ export interface WorkflowState {
  */
 export const getWorkflowState = async (): Promise<WorkflowState> => {
   try {
-    const response = await api.get('/state');
+    // Get configuration from local storage
+    const config = getConfig();
+    if (!config || !config.session_id) {
+      throw new Error('Configuration not found. Please initialize session first.');
+    }
+    
+    const response = await api.get('/state', {
+      params: {
+        user_id: config.user_id,
+        session_id: config.session_id
+      }
+    });
     const data = response.data as WorkflowApiResponse;
     
     //console.log('API Response Data:', data);
